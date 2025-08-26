@@ -1,62 +1,307 @@
-<!DOCTYPE html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>원클릭 원고 자동생성기 (연동 완료)</title>
-<style>:root{--bg:#f7fbff;--card:#ffffff;--ink:#0f172a;--ink2:#475569;--pri:#2563eb;--mut:#94a3b8;--bd:#e2e8f0;--red:#dc2626}
-*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
-.wrap{max-width:980px;margin:26px auto;padding:0 16px} h1{font-size:22px;margin:0 0 14px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;box-shadow:0 2px 8px rgba(2,6,23,.05);padding:16px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:780px){.row{grid-template-columns:1fr}}
-label{font-size:13px;color:var(--ink2);display:block;margin:8px 0 6px}
-select,input,textarea,button{width:100%;padding:12px;border-radius:10px;border:1px solid var(--bd);font-size:15px;background:#fff;color:var(--ink)}
-textarea{min-height:160px;resize:vertical;line-height:1.7}
-.btn{cursor:pointer;border:1px solid var(--pri);background:var(--pri);color:#fff;font-weight:600}
-.btn.ghost{background:#fff;color:var(--pri)} .btn.small{padding:8px 10px;font-size:13px;border-radius:8px}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px} .note{font-size:12px;color:var(--ink2)} .toast{margin-top:8px;font-size:13px;color:#0f172a}
-.out{min-height:240px;white-space:pre-wrap;word-break:keep-all} .copybar{display:flex;justify-content:space-between;align-items:center;margin:8px 0}
-.mut{color:var(--mut)} .foot{font-size:13px;margin:18px 6px 30px;color:#0f172a;text-align:center} .foot .maker{font-size:14px;font-weight:700} .foot .ban{color:var(--red);font-size:12px;margin-top:4px}
-</style></head>
-<body><div class="wrap">
-<h1>원고 자동생성기 <span style="padding:2px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:12px;margin-left:8px;display:inline-block">연동 완료</span></h1>
-<div class="card">
-  <div class="row">
-    <div><label>원고 종류</label><select id="mode"><option value="review">후기성(리뷰)</option><option value="info">정보성</option></select></div>
-    <div><label>글자수 (공백 제외)</label><select id="len"><option value="100-300">100 ~ 300자</option><option value="300-500">300 ~ 500자</option><option value="600-800">600 ~ 800자</option><option value="800-1000">800 ~ 1000자</option><option value="1000-2000">1000 ~ 2000자</option></select></div>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>원고 자동생성기 (후기성/정보성)</title>
+  <style>
+    :root{
+      --bg:#fafbfd; --card:#ffffff; --ink:#1a1c20; --muted:#6b7280;
+      --accent:#2563eb; --accent-weak:#e8efff; --ok:#2e7d32; --warn:#d32f2f;
+      --line:#e5e7eb;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .wrap{max-width:980px;margin:32px auto;padding:0 16px}
+    h1{margin:0 0 18px;font-size:22px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,.04);padding:18px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .field{display:flex;flex-direction:column;gap:8px}
+    label{font-weight:600}
+    input[type=text],select,textarea{
+      width:100%;padding:12px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit;outline:none;
+    }
+    textarea{min-height:120px;resize:vertical;white-space:pre-wrap}
+    .hint{color:var(--muted);font-size:12px}
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+    .btn{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
+    .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .btn.ghost{background:#f8fafc}
+    .msg{font-size:13px;color:var(--muted)}
+    .msg.inline{margin-left:8px}
+    .hstack{display:flex;align-items:center;gap:8px}
+    .tight{gap:6px}
+    .checkboxline{display:flex;align-items:center;gap:8px;margin-top:10px}
+    .titlebar{display:flex;align-items:center;gap:8px;margin:8px 0}
+    .badge{font-size:12px;color:var(--muted)}
+    .badge.ok{color:var(--ok)}
+    .badge.warn{color:var(--warn)}
+    hr{border:none;border-top:1px solid var(--line);margin:18px 0}
+    .footer{margin:28px 0 60px;text-align:center}
+    .maker{font-weight:800;font-size:14px}
+    .ban{color:#ef4444;font-size:12px}
+    .error{color:var(--warn);font-size:13px}
+    .success{color:var(--ok);font-size:13px}
+    .muted{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>원고 자동생성기 (후기성/정보성)</h1>
+
+    <div class="card">
+      <div class="row">
+        <div class="field">
+          <label for="mode">원고 종류</label>
+          <select id="mode">
+            <option value="review">후기성(리뷰)</option>
+            <option value="info">정보성</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="lengthSelect">글자수 범위(공백 제외)</label>
+          <select id="lengthSelect">
+            <option value="auto">자동(모델 판단)</option>
+            <option value="100_300">100 ~ 300자</option>
+            <option value="300_500">300 ~ 500자</option>
+            <option value="600_800">600 ~ 800자</option>
+            <option value="1000_2000">1000 ~ 2000자</option>
+            <option value="1000_plus">1000자 이상</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div class="field">
+          <label for="company">업체명</label>
+          <input id="company" type="text" placeholder="예: 아이디헤어 반포1호점" />
+        </div>
+        <div class="field">
+          <label for="persona">도입 디테일 추가(선택)</label>
+          <input id="persona" type="text" placeholder="예: 비오는 날 따끈한 파마 생각이 나서…" />
+          <div class="hint">후기성일 때 도입 문장에 살짝 섞일 디테일(선택)</div>
+        </div>
+      </div>
+
+      <div class="checkboxline">
+        <input id="forbidName" type="checkbox" />
+        <label for="forbidName" style="font-weight:600;margin:0">(정보성) 업체명 언급 금지</label>
+      </div>
+
+      <div class="field" style="margin-top:12px">
+        <label for="guide">가이드(자유 형식)</label>
+        <textarea id="guide" placeholder="업체 안내/공간/메뉴(또는 서비스)/키워드/참고사항 등을 자유롭게 적어주세요. 긴 가이드여도 그대로 넣어주시면 모델이 요약·가공해 자연스럽게 씁니다."></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="btnGen">원고 생성</button>
+        <span class="msg inline" id="genHint" style="display:none;">원고 생성까지 최대 1~2분 소요 될 수 있습니다.</span>
+        <button class="btn" id="btnReset">가이드 초기화</button>
+        <span id="errorArea" class="error"></span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="titlebar">
+        <strong>생성된 원고</strong>
+        <span id="lenBadge" class="badge">0자(공백 제외)</span>
+      </div>
+      <textarea id="output" placeholder="생성 결과가 여기에 표시됩니다. 필요 시 직접 다듬어도 됩니다."></textarea>
+      <div class="actions">
+        <button class="btn" id="btnCopyOut">복사</button>
+        <span id="rangeNote" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="titlebar"><strong>금지어 검사기</strong></div>
+      <div class="hint" style="margin-bottom:8px">
+        결과는 금지어 부분만 <code>*단어</code>로 강조됩니다. (단어 내부 포함 시 해당 부분만 강조)
+      </div>
+      <textarea id="banSrc" placeholder="검사할 글을 붙여넣으세요. (생성된 원고 그대로 검사하려면 비워두고 바로 ‘검사’ 눌러도 됩니다.)" style="min-height:84px"></textarea>
+      <div class="actions">
+        <button class="btn" id="btnScan">검사</button>
+        <span class="muted">금지어 목록은 내부 고정 리스트를 사용합니다.</span>
+      </div>
+      <div class="titlebar" style="margin-top:6px"><strong>검사 결과</strong></div>
+      <textarea id="banOut" placeholder="검사 결과가 여기에 표시됩니다." style="min-height:84px"></textarea>
+      <div class="actions">
+        <button class="btn" id="btnCopyBan">검사 결과 복사</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="maker">제작자: 드림투유 은경</div>
+      <div class="ban">무단 배포·공유 금지</div>
+    </div>
   </div>
-  <div class="row">
-    <div><label>업체명</label><input id="company" placeholder="예: 아이디헤어 반포1호점"></div>
-    <div><label>페르소나 변주(선택)</label><input id="persona" placeholder="예: 친구와 주말 방문, 점심 혼밥, 비 오는 날 등"></div>
-  </div>
-  <div><label><input type="checkbox" id="hideName"> (정보성) 업체명 언급 금지</label></div>
-  <div><label>가이드(자유 형식)</label><textarea id="guide" placeholder="가이드를 붙여넣어 주세요. 메뉴/서비스/분위기/특징 등 자유롭게 적어도 됩니다."></textarea></div>
-  <div class="actions"><button class="btn" id="gen">원고 생성</button><button class="btn ghost" id="reset">가이드 초기화</button></div>
-  <div id="toast" class="toast mut"></div>
-</div>
-<div class="card" style="margin-top:14px">
-  <div class="copybar"><div><strong>생성된 원고</strong> <span id="count" class="mut">0자(공백 제외)</span></div><button class="btn small ghost" id="copyOut">복사</button></div>
-  <div id="out" class="out"></div>
-</div>
-<div class="card" style="margin-top:14px">
-  <div class="copybar"><div><strong>금지어 검사 결과</strong></div><button class="btn small ghost" id="copyBan">복사</button></div>
-  <div class="note">금지어는 단어 내부에 포함돼도 금지어 부분만 <code>*금지어</code>로 표기합니다.</div>
-  <div id="ban" class="out"></div>
-</div>
-<div class="foot"><div class="maker">제작자 : 드림투유 은경</div><div class="ban">무단 배포&공유 금지</div></div>
-</div>
-<script>
-(function(){'use strict'; const $=id=>document.getElementById(id);
-const clean=t=>String(t||'').replace(/\\u00A0/g,' ').replace(/[ \\t]{2,}/g,' ').replace(/\\s+\\n/g,'\\n').trim();
-const noSpaceLen=s=>String(s||'').replace(/\\s/g,'').length;
-function smartWrap(text,width=20){const sep=/[,，]|·/; const end=/[.?!]/; const words=String(text).replace(/\\s+/g,' ').trim().split(' '); const lines=[]; let line=''; const push=()=>{if(line){lines.push(line);line='';}}; for(const w of words){const join=(line?line+' ':'')+w; const len=join.replace(/\\s/g,'').length; if(len<=width){line=join; if(sep.test(w.slice(-1))||end.test(w.slice(-1))) push();} else{push(); if(w.replace(/\\s/g,'').length>width){let buf=w; while(buf.replace(/\\s/g,'').length>width){lines.push(buf.slice(0,width)); buf=buf.slice(width);} line=buf; if(sep.test(line.slice(-1))||end.test(line.slice(-1))) push();} else{line=w; if(sep.test(w.slice(-1))||end.test(w.slice(-1))) push();}}} push(); return lines.join('\\n');}
-const BAN=['다녀','방문','추천','경험','보건','복지','전문','최신','첨단','최소','최고','최상','확실','안전','만족','보장','무료','할인','혜택','특가','수험생','효능','효과','맞춤','완치'];
-function markBan(text){let out=String(text||''); BAN.forEach(w=>{try{out=out.replace(new RegExp(w,'g'),'*'+w)}catch(e){}}); return out;}
-async function generate(){const mode=$('mode').value; const len=$('len').value; const company=clean($('company').value); const guide=clean($('guide').value); const persona=clean($('persona').value); const hide=$('hideName').checked; $('toast').textContent='원고 생성까지 최대 1~2분 소요 될 수 있습니다.'; $('out').textContent=''; $('ban').textContent=''; $('count').textContent='0자(공백 제외)';
-  const payload={mode,length:len,company,guide,persona_seed:persona,hide_name:hide};
-  try{const res=await fetch('/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    const ct=res.headers.get('content-type')||''; const data=ct.includes('application/json')?await res.json():await res.text(); if(!res.ok){const msg=(data&&data.error)?data.error:('HTTP '+res.status); throw new Error(msg);}
-    let txt=''; if(typeof data==='string'){txt=data} else if(typeof data?.text==='string'){txt=data.text} else if(typeof data?.output==='string'){txt=data.output} else if(typeof data?.result==='string'){txt=data.result} else{const cand=['content','message','data','body']; for(const k of cand){ if(typeof data[k]==='string'){txt=data[k]; break;} } if(!txt) txt=JSON.stringify(data);}
-    const wrapped=smartWrap(txt,20); $('out').textContent=wrapped; $('count').textContent=noSpaceLen(txt)+'자(공백 제외)'; $('ban').textContent=markBan(wrapped); $('toast').textContent='완료!';
-  }catch(e){$('toast').textContent='오류: '+e.message;}}
-async function copyEl(id){const t=$(id).textContent; try{await navigator.clipboard.writeText(t); alert('복사되었습니다.');}catch(e){const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('복사되었습니다.');}}
-document.addEventListener('DOMContentLoaded',()=>{document.getElementById('gen').addEventListener('click',generate); document.getElementById('reset').addEventListener('click',()=>{$('guide').value='';$('toast').textContent='';}); document.getElementById('copyOut').addEventListener('click',()=>copyEl('out')); document.getElementById('copyBan').addEventListener('click',()=>copyEl('ban'));});
-})();</script>
-</body></html>
+
+  <script>
+    // ====== 유틸: 공백 제외 글자수 엄정 카운트 ======
+    function countNoSpaces(text){
+      const withoutSpaces = (text || '')
+        .normalize('NFC')
+        .replace(/[\s\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000\u200B]/g,'');
+      if (typeof Intl !== 'undefined' && Intl.Segmenter){
+        const seg = new Intl.Segmenter('ko',{granularity:'grapheme'});
+        return Array.from(seg.segment(withoutSpaces)).length;
+      }
+      return Array.from(withoutSpaces).length;
+    }
+
+    // 길이 범위
+    const LENGTH_RANGES = {
+      auto: {min:0, max:Infinity},
+      '100_300': {min:100, max:300},
+      '300_500': {min:300, max:500},
+      '600_800': {min:600, max:800},
+      '1000_2000': {min:1000, max:2000},
+      '1000_plus': {min:1000, max:Infinity}
+    };
+
+    // DOM
+    const $ = s => document.querySelector(s);
+    const modeEl = $('#mode');
+    const lenSel = $('#lengthSelect');
+    const companyEl = $('#company');
+    const personaEl = $('#persona');
+    const forbidEl = $('#forbidName');
+    const guideEl = $('#guide');
+    const btnGen = $('#btnGen');
+    const btnReset = $('#btnReset');
+    const outEl = $('#output');
+    const lenBadge = $('#lenBadge');
+    const rangeNote = $('#rangeNote');
+    const genHint = $('#genHint');
+    const errorArea = $('#errorArea');
+
+    // 실시간 길이 표기
+    function updateLenBadge(){
+      const n = countNoSpaces(outEl.value || '');
+      const key = lenSel.value || 'auto';
+      const {min,max} = LENGTH_RANGES[key] || LENGTH_RANGES.auto;
+      const ok = n>=min && n<=max;
+      lenBadge.textContent = `${n}자(공백 제외)`;
+      lenBadge.className = 'badge ' + (ok?'ok':'warn');
+
+      if (key==='auto'){
+        rangeNote.textContent = '현재 범위: 자동';
+      } else {
+        rangeNote.textContent = `요청 범위: ${min}~${max===Infinity?'무제한':max}자(공백 제외)`;
+      }
+    }
+    outEl.addEventListener('input', updateLenBadge);
+    lenSel.addEventListener('change', updateLenBadge);
+    updateLenBadge();
+
+    // 자연 트림(너무 길 때 문장 단위로 줄임)
+    function smartTrimToRange(text, min, max){
+      let t = (text||'').trim();
+      if (countNoSpaces(t) > max && max !== Infinity){
+        const parts = t.split(/(?<=[\.!?…]|[다요]\.)\s+/g);
+        let acc = '';
+        for (const p of parts){
+          const test = acc ? `${acc} ${p}` : p;
+          if (countNoSpaces(test) > max) break;
+          acc = test;
+        }
+        if (acc) t = acc;
+        if (countNoSpaces(t) > max){
+          let i = t.length;
+          while (i>0 && countNoSpaces(t.slice(0,i))>max) i--;
+          t = t.slice(0,i).replace(/\s+[^\s]*$/,'');
+        }
+      }
+      return t;
+    }
+
+    // 서버에서 받은 글 적용 (줄바꿈 정리 + 범위 보정)
+    function applyGeneratedText(text){
+      const key = lenSel.value || 'auto';
+      const {min,max} = LENGTH_RANGES[key] || LENGTH_RANGES.auto;
+      let finalText = (text||'').replace(/\\n/g,'\n').trim();
+
+      if (max!==Infinity && countNoSpaces(finalText) > max){
+        finalText = smartTrimToRange(finalText, min, max);
+      }
+      outEl.value = finalText;
+      updateLenBadge();
+      if (countNoSpaces(finalText) < min){
+        console.warn('최소 길이 미만입니다. 필요 시 한두 문장만 보태 사용하세요.');
+      }
+    }
+
+    // 원고 생성
+    btnGen.addEventListener('click', async ()=>{
+      genHint.style.display = 'inline';
+      errorArea.textContent = '';
+      const payload = {
+        mode: modeEl.value, // 'review' | 'info'
+        company: companyEl.value.trim(),
+        persona: personaEl.value.trim(),
+        guide: guideEl.value.trim(),
+        forbidName: !!forbidEl.checked,
+        lengthKey: lenSel.value
+      };
+
+      try{
+        const res = await fetch('/api/generate',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok){
+          const t = await res.text();
+          throw new Error(`HTTP ${res.status} — ${t}`);
+        }
+        const data = await res.json();
+        applyGeneratedText(data.text || data.result || '');
+      }catch(err){
+        console.error(err);
+        errorArea.textContent = `오류: ${err.message}`;
+      }finally{
+        setTimeout(()=>{ genHint.style.display='none'; }, 1500);
+      }
+    });
+
+    // 가이드 초기화
+    btnReset.addEventListener('click', ()=>{
+      guideEl.value = '';
+      personaEl.value = '';
+      genHint.style.display = 'none';
+      errorArea.textContent = '';
+    });
+
+    // 복사
+    $('#btnCopyOut').addEventListener('click', async ()=>{
+      await navigator.clipboard.writeText(outEl.value || '');
+      rangeNote.textContent = '복사 완료!';
+      setTimeout(updateLenBadge, 1200);
+    });
+
+    // ===== 금지어 검사기 =====
+    const FORBIDDEN = [
+      "다녀","방문","추천","경험","보건","복지","전문","최신","첨단","최소","최고","최상","확실",
+      "안전","만족","보장","무료","할인","혜택","특가","수험생","효능","효과","맞춤","완치"
+    ];
+    function highlightForbidden(text){
+      let out = text || '';
+      const sorted = [...FORBIDDEN].sort((a,b)=>b.length-a.length);
+      for (const w of sorted){
+        const re = new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g');
+        out = out.replace(re, m => `*${m}`);
+      }
+      return out;
+    }
+    $('#btnScan').addEventListener('click', ()=>{
+      const src = (($('#banSrc').value || '').trim()) || (outEl.value || '');
+      $('#banOut').value = highlightForbidden(src);
+    });
+    $('#btnCopyBan').addEventListener('click', async ()=>{
+      await navigator.clipboard.writeText(($('#banOut').value || ''));
+    });
+
+    updateLenBadge();
+  </script>
+</body>
+</html>
